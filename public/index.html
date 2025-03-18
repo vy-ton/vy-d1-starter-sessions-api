@@ -55,7 +55,7 @@
           return null;
         }
         return html`
-          <div>
+          <section>
             <h4>Request metadata</h4>
             <dl class="grid">
               <div>
@@ -75,7 +75,7 @@
               </div>
               ` : null}
             </dl>
-          </div>
+          </section>
         `;
       };
 
@@ -120,8 +120,8 @@
         console.log(result);
 
         return html`
-          <section ref=${containerRef}>
-            <fieldset>
+          <div ref=${containerRef}>
+            <section>
                 <h4>Create new order</h4>
                 <div class="grid">
                   <label>CustomerID
@@ -163,42 +163,42 @@
                     value="Reset"
                   />
                 </div>
-            </fieldset>
+            </section>
 
-            <div>
-                <${Latencies} ...${result} />
-            </div>
+            <${Latencies} ...${result} />
 
-            <div id="rows">
+            <section id="rows">
               <h4>Orders</h4>
-              <table class="striped">
-                <thead>
-                  <tr>
-                    <th scope="col">
-                      Customer ID
-                    </th>
-                    <th scope="col">
-                      Order ID
-                    </th>
-                    <th>Quantity</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${Array.isArray(result?.results) && result.results.length > 0 ? result.results.reverse().map((row, idx) => {
-                    return html`<tr
-                      key=${`${row.now}`}
-                    >
-                      <td>
-                        ${row.customerId}
-                      </td>
-                      <td>${row.orderId}</td>
-                      <td>${row.quantity}</td>
-                    </tr>`;
-                  }) : html`<tr><td colspan="3">No orders yet.</td></tr>`}
-                </tbody>
-              </table>
-            </div>
-          </section>
+              <div class="overflow-auto">
+                <table class="striped">
+                  <thead>
+                    <tr>
+                      <th scope="col">
+                        Customer ID
+                      </th>
+                      <th scope="col">
+                        Order ID
+                      </th>
+                      <th>Quantity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${Array.isArray(result?.results) && result.results.length > 0 ? result.results.reverse().map((row, idx) => {
+                      return html`<tr
+                        key=${`${row.now}`}
+                      >
+                        <td>
+                          ${row.customerId}
+                        </td>
+                        <td>${row.orderId}</td>
+                        <td>${row.quantity}</td>
+                      </tr>`;
+                    }) : html`<tr><td colspan="3">No orders yet.</td></tr>`}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
         `;
       };
 
