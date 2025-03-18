@@ -56,16 +56,22 @@
         }
         return html`
           <div>
-            <dl>
+            <dl class="grid">
+              <div>
               <dt>D1 Latency (Worker -> D1 Database)</dt>
               <dd>${Number(d1Latency).toFixed(4)}ms</dd>
+              </div>
 
+              <div>
               <dt>E2E Latency (Browser -> Worker -> D1 Database)</dt>
               <dd>${Number(browserLatency).toFixed(4)}ms</dd>
+              </div>
 
               ${servedByRegion ? html`
+              <div>
               <dt>Served by Region</dt>
               <dd>${servedByRegion.toUpperCase()} (${servedByPrimary ? "primary" : "replica"})</dd>
+              </div>
               ` : null}
             </dl>
           </div>
@@ -148,10 +154,11 @@
                 </div>
             </fieldset>
 
-            <div id="rows">
-              <div>
+            <div>
                 <${Latencies} ...${result} />
-              </div>
+            </div>
+
+            <div id="rows">
               <table class="striped">
                 <thead>
                   <tr>
