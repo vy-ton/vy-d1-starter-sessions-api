@@ -21,11 +21,13 @@
       // Initialize htm with Preact
       const html = htm.bind(h);
 
-      const fetchWorker = async (method, url, bookmark) => {
+      const fetchWorker = async (method, url, body, bookmark) => {
         const now = Date.now();
         return fetch(url, {
             method,
+            body: body ? JSON.stringify(body) : undefined,
             headers: {
+              "Content-Type": "application/json",
               "x-d1-bookmark": bookmark,
             }
         }).then((resp) => {
@@ -48,6 +50,10 @@
       };
 
       const Latencies = ({ d1Latency, browserLatency, servedByRegion, servedByPrimary }) => {
+        console.log({ d1Latency, browserLatency, servedByRegion, servedByPrimary });
+        if (!d1Latency || !browserLatency) {
+          return null;
+        }
         return html`
           <div>
             <dl>
@@ -57,8 +63,10 @@
               <dt>E2E Latency (Browser -> Worker -> D1 Database)</dt>
               <dd>${Number(browserLatency).toFixed(4)}ms</dd>
 
+              ${servedByRegion ? html`
               <dt>Served by Region</dt>
               <dd>${servedByRegion.toUpperCase()} (${servedByPrimary ? "primary" : "replica"})</dd>
+              ` : null}
             </dl>
           </div>
         `;
@@ -71,7 +79,7 @@
 
         const listOrders = () => {
           const bookmark = result ? result.sessionBookmark : "first-unconstrained";
-          fetchWorker("GET", "/api/orders", bookmark).then(json => {
+          fetchWorker("GET", "/api/orders", null, bookmark).then(json => {
             // Only update the bookmark if it's newer. Avoid issues with concurrent racy requests.
             if ((mutRef.bookmark ?? "").localeCompare(json.sessionBookmark) < 0) {
               setResult(json);
@@ -82,45 +90,67 @@
 
         const createOrder = () => {
           const bookmark = mutRef.bookmark ?? "first-unconstrained";
-          fetchWorker("GET", "/api/orders", bookmark).then(listOrders);
+          fetchWorker("POST", "/api/orders", {
+            customerId: containerRef.current.querySelector("input[name='customerId']").value,
+            orderId: containerRef.current.querySelector("input[name='orderId']").value,
+            quantity: Number(containerRef.current.querySelector("input[name='quantity']").value),
+          }, bookmark).then(listOrders);
+        };
+
+        const deleteOrders = () => {
+          const bookmark = mutRef.bookmark ?? "first-unconstrained";
+          fetchWorker("DELETE", "/api/orders", null, bookmark).then(listOrders);
         };
 
         return html`
-          <section>
-            <fieldset class="grid">
+          <section ref=${containerRef}>
+            <fieldset>
                 <h4>Create new order</h4>
                 <div role="group">
+                  <label>CustomerID
                   <input
                     name="customerId"
-                    value=${crypto.randomUUID()}
+                    value="customer-1"
                     type="text"
                   />
+                  </label>
+                  <label>OrderID
                   <input
                     name="orderId"
                     value=${crypto.randomUUID()}
                     type="text"
                   />
+                  </label>
+                  <label>Quantity
                   <input
                     name="quantity"
-                    value=${10}
+                    value=${Math.ceil(Math.random()*100)}
                     type="number"
                   />
+                  </label>
+                </div>
+                <div class="grid">
                   <input
                     type="button"
                     onClick=${(e) => createOrder()}
-                    value="Create"
+                    value="Create order"
                   />
                   <input
                     type="button"
                     onClick=${(e) => listOrders()}
                     value="List orders"
                   />
+                  <input
+                    type="button"
+                    onClick=${(e) => deleteOrders()}
+                    value="Delete all"
+                  />
                 </div>
             </fieldset>
 
-            <div id="rows" ref=${containerRef}>
+            <div id="rows">
               <div>
-                <${Latencies} ...${result}} />
+                <${Latencies} ...${result} />
               </div>
               <table class="striped">
                 <thead>
@@ -135,9 +165,9 @@
                   </tr>
                 </thead>
                 <tbody>
-                  ${Array.isArray(result.results) ? result.results.map((row, idx) => {
+                  ${Array.isArray(result?.results) ? result.results.reverse().map((row, idx) => {
                     return html`<tr
-                      key=${`${row.firstPrimary.now}`}
+                      key=${`${row.now}`}
                     >
                       <td>
                         ${row.customerId}
@@ -145,7 +175,7 @@
                       <td>${row.orderId}</td>
                       <td>${row.quantity}</td>
                     </tr>`;
-                  }) : <tr><td colspan="3">No orders yet.</td></tr>}
+                  }) : html`<tr><td colspan="3">No orders yet.</td></tr>`}
                 </tbody>
               </table>
             </div>
@@ -154,10 +184,6 @@
       };
 
       const Demos = () => {
-        const [demo, setDemo] = useState("one");
-
-        demoContent = html`<${Demo1} />`;
-        
         return html`
           <div>
             <section>
@@ -166,7 +192,7 @@
               </header>
             </section>
 
-            <section>${demoContent}</section>
+            <section><${Demo1} /></section>
 
             <hr />
 

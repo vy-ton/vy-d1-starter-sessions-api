@@ -11,18 +11,18 @@ export default {
 		// A. Create the Session.
 		// When we create a D1 Session, we can continue where we left off from a previous    
 		// Session if we have that Session's last bookmark or use a constraint.
-		const bookmark = request.headers.get('x-d1-bookmark') ?? 'first-unconstrained'
-		const session = env.DB01.withSession(bookmark)
+		const bookmark = request.headers.get('x-d1-bookmark') ?? 'first-unconstrained';
+		const session = env.DB01.withSession(bookmark);
 
 		try {
 			// Use this Session for all our Workers' routes.
-			const response = await handleRequest(request, session)
+			const response = await handleRequest(request, session);
 
 			if (response.status === 200) {
 				// B. Return the bookmark so we can continue the Session in another request.
-				response.headers.set('x-d1-bookmark', session.getBookmark() ?? "")
+				response.headers.set('x-d1-bookmark', session.getBookmark() ?? "");
 			}
-			return response
+			return response;
 
 		} catch (e) {
 			console.error({ message: "Failed to handle request", error: String(e), errorProps: e, url, bookmark });
@@ -41,31 +41,40 @@ type Order = {
 }
 
 async function handleRequest(request: Request, session: D1DatabaseSession) {
-	const { pathname } = new URL(request.url)
+	const { pathname } = new URL(request.url);
 	const tsStart = Date.now();
+
+	// Move to migrations for efficiency.
+	await initTables(session);
 
 	if (request.method === "GET" && pathname === '/api/orders') {
 		// C. Session read query.
-		const resp = await session.prepare('SELECT * FROM Orders').all()
-		return Response.json(buildResponse(session, resp, tsStart))
+		const resp = await session.prepare('SELECT * FROM Orders').all();
+		return Response.json(buildResponse(session, resp, tsStart));
 
 	} else if (request.method === "POST" && pathname === '/api/orders') {
-		const order = await request.json<Order>()
+		const order = await request.json<Order>();
 
 		// D. Session write query.
 		// Since this is a write query, D1 will transparently forward the query.
 		await session
 			.prepare('INSERT INTO Orders VALUES (?, ?, ?)')
 			.bind(order.orderId, order.customerId, order.quantity)
-			.run()
+			.run();
 
 		// E. Session read-after-write query.
 		// In order for the application to be correct, this SELECT
 		// statement must see the results of the INSERT statement above.
 		const resp = await session
 			.prepare('SELECT COUNT(*) FROM Orders')
-			.all()
+			.all();
 
+		return Response.json(buildResponse(session, resp, tsStart));
+
+	} else if (request.method === "DELETE" && pathname === '/api/orders') {
+		const resp = await session
+			.prepare('DELETE FROM Orders;')
+			.run();
 		return Response.json(buildResponse(session, resp, tsStart));
 	}
 
@@ -83,4 +92,14 @@ function buildResponse(session: D1DatabaseSession, res: D1Result, tsStart: numbe
 		// Add the session bookmark inside the response body too.
 		sessionBookmark: session.getBookmark(),
 	};
+}
+
+async function initTables(session: D1DatabaseSession) {
+	await session
+		.prepare(`CREATE TABLE IF NOT EXISTS Orders(
+			customerId TEXT UNIQUE NOT NULL PRIMARY KEY,
+			orderId TEXT NOT NULL,
+			quantity INTEGER NOT NULL
+		)`)
+		.all();
 }
