@@ -183,17 +183,21 @@
                     </tr>
                   </thead>
                   <tbody>
-                    ${Array.isArray(result?.results) && result.results.length > 0 ? result.results.reverse().map((row, idx) => {
-                      return html`<tr
-                        key=${`${row.now}`}
-                      >
-                        <td>
-                          ${row.customerId}
-                        </td>
-                        <td>${row.orderId}</td>
-                        <td>${row.quantity}</td>
-                      </tr>`;
-                    }) : html`<tr><td colspan="3">No orders yet.</td></tr>`}
+                    ${!Array.isArray(result?.results) 
+                      ? html`<tr><td colspan="3">Use the buttons above to load existing orders or create new ones.</td></tr>`
+                      : result.results.length > 0
+                        ? result.results.reverse().map((row, idx) => {
+                          return html`<tr
+                            key=${`${row.now}`}
+                          >
+                            <td>
+                              ${row.customerId}
+                            </td>
+                            <td>${row.orderId}</td>
+                            <td>${row.quantity}</td>
+                          </tr>`;
+                        })
+                        : html`<tr><td colspan="3">No orders yet.</td></tr>`}
                   </tbody>
                 </table>
               </div>
