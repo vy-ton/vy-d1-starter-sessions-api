@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>D1 Sessions API</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.red.min.css"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <script type="module">
+      import { h, render } from "https://esm.sh/preact@10.25.4";
+      import {
+        useState,
+        useEffect,
+        useRef,
+      } from "https://esm.sh/preact@10.25.4/hooks";
+      import htm from "https://esm.sh/htm@3.1.1";
+
+      // Initialize htm with Preact
+      const html = htm.bind(h);
+
+      const fetchWorker = async (method, url, bookmark) => {
+        const now = Date.now();
+        return fetch(url, {
+            method,
+            headers: {
+              "x-d1-bookmark": bookmark,
+            }
+        }).then((resp) => {
+          return resp.json().then((json) => {
+            if (!resp.ok) {
+              console.error(`fetch failed with error: ${json.error}`);
+            }
+            if (!json.sessionBookmark) {
+              json.sessionBookmark = resp.headers.get("x-d1-bookmark") ?? "";
+            }
+            return { ...json, browserLatency: Date.now() - now, now };
+          });
+        });
+      };
+
+      const highlightedRowStyle = {
+        fontStyle: "italic",
+        fontWeight: "bolder",
+        border: "2px solid #D93526", // pico-color-red-500
+      };
+
+      const Latencies = ({ d1Latency, browserLatency, servedByRegion, servedByPrimary }) => {
+        return html`
+          <div>
+            <dl>
+              <dt>D1 Latency (Worker -> D1 Database)</dt>
+              <dd>${Number(d1Latency).toFixed(4)}ms</dd>
+
+              <dt>E2E Latency (Browser -> Worker -> D1 Database)</dt>
+              <dd>${Number(browserLatency).toFixed(4)}ms</dd>
+
+              <dt>Served by Region</dt>
+              <dd>${servedByRegion.toUpperCase()} (${servedByPrimary ? "primary" : "replica"})</dd>
+            </dl>
+          </div>
+        `;
+      };
+
+      const Demo1 = () => {
+        const containerRef = useRef(null);
+        const mutRef = useRef({});
+        const [result, setResult] = useState(null);
+
+        const listOrders = () => {
+          const bookmark = result ? result.sessionBookmark : "first-unconstrained";
+          fetchWorker("GET", "/api/orders", bookmark).then(json => {
+            // Only update the bookmark if it's newer. Avoid issues with concurrent racy requests.
+            if ((mutRef.bookmark ?? "").localeCompare(json.sessionBookmark) < 0) {
+              setResult(json);
+              mutRef.bookmark = json.sessionBookmark;
+            }
+          });
+        };
+
+        const createOrder = () => {
+          const bookmark = mutRef.bookmark ?? "first-unconstrained";
+          fetchWorker("GET", "/api/orders", bookmark).then(listOrders);
+        };
+
+        return html`
+          <section>
+            <fieldset class="grid">
+                <h4>Create new order</h4>
+                <div role="group">
+                  <input
+                    name="customerId"
+                    value=${crypto.randomUUID()}
+                    type="text"
+                  />
+                  <input
+                    name="orderId"
+                    value=${crypto.randomUUID()}
+                    type="text"
+                  />
+                  <input
+                    name="quantity"
+                    value=${10}
+                    type="number"
+                  />
+                  <input
+                    type="button"
+                    onClick=${(e) => createOrder()}
+                    value="Create"
+                  />
+                  <input
+                    type="button"
+                    onClick=${(e) => listOrders()}
+                    value="List orders"
+                  />
+                </div>
+            </fieldset>
+
+            <div id="rows" ref=${containerRef}>
+              <div>
+                <${Latencies} ...${result}} />
+              </div>
+              <table class="striped">
+                <thead>
+                  <tr>
+                    <th scope="col">
+                      Customer ID
+                    </th>
+                    <th scope="col">
+                      Order ID
+                    </th>
+                    <th>Quantity</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${Array.isArray(result.results) ? result.results.map((row, idx) => {
+                    return html`<tr
+                      key=${`${row.firstPrimary.now}`}
+                    >
+                      <td>
+                        ${row.customerId}
+                      </td>
+                      <td>${row.orderId}</td>
+                      <td>${row.quantity}</td>
+                    </tr>`;
+                  }) : <tr><td colspan="3">No orders yet.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        `;
+      };
+
+      const Demos = () => {
+        const [demo, setDemo] = useState("one");
+
+        demoContent = html`<${Demo1} />`;
+        
+        return html`
+          <div>
+            <section>
+              <header class="grid">
+                <h1>D1 Sessions API</h1>
+              </header>
+            </section>
+
+            <section>${demoContent}</section>
+
+            <hr />
+
+            <small
+              >(<a
+                href="https://github.com/lambrospetrou/d1-starter-sessions-api"
+                target="_blank"
+                >Demo source code</a
+              >)</small
+            >
+          </div>
+        `;
+      };
+
+      render(html`<${Demos} />`, document.getElementById("app"));
+    </script>
+  </head>
+
+  <body>
+    <main class="container-fluid" id="app"></main>
+  </body>
+</html>
