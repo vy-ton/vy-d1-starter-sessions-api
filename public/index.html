@@ -56,21 +56,22 @@
         }
         return html`
           <div>
+            <h4>Request metadata</h4>
             <dl class="grid">
               <div>
-              <dt>D1 Latency (Worker -> D1 Database)</dt>
-              <dd>${Number(d1Latency).toFixed(4)}ms</dd>
+                <dt>D1 Latency (Worker -> D1 Database)</dt>
+                <dd>${Number(d1Latency).toFixed(4)}ms</dd>
               </div>
 
               <div>
-              <dt>E2E Latency (Browser -> Worker -> D1 Database)</dt>
-              <dd>${Number(browserLatency).toFixed(4)}ms</dd>
+                <dt>E2E Latency (Browser -> Worker -> D1 Database)</dt>
+                <dd>${Number(browserLatency).toFixed(4)}ms</dd>
               </div>
 
               ${servedByRegion ? html`
               <div>
-              <dt>Served by Region</dt>
-              <dd>${servedByRegion.toUpperCase()} (${servedByPrimary ? "primary" : "replica"})</dd>
+                <dt>Served by Region</dt>
+                <dd>${servedByRegion.toUpperCase()} (${servedByPrimary ? "primary" : "replica"})</dd>
               </div>
               ` : null}
             </dl>
@@ -103,9 +104,9 @@
           }, bookmark).then(listOrders);
         };
 
-        const deleteOrders = () => {
+        const resetTables = () => {
           const bookmark = mutRef.bookmark ?? "first-unconstrained";
-          fetchWorker("DELETE", "/api/orders", null, bookmark).then(listOrders);
+          fetchWorker("POST", "/api/reset", null, bookmark).then(listOrders);
         };
 
         console.log(result);
@@ -114,7 +115,7 @@
           <section ref=${containerRef}>
             <fieldset>
                 <h4>Create new order</h4>
-                <div role="group">
+                <div class="grid">
                   <label>CustomerID
                   <input
                     name="customerId"
@@ -150,8 +151,8 @@
                   />
                   <input
                     type="button"
-                    onClick=${(e) => deleteOrders()}
-                    value="Delete all"
+                    onClick=${(e) => resetTables()}
+                    value="Reset"
                   />
                 </div>
             </fieldset>
@@ -161,6 +162,7 @@
             </div>
 
             <div id="rows">
+              <h4>Orders</h4>
               <table class="striped">
                 <thead>
                   <tr>

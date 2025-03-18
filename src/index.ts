@@ -71,11 +71,8 @@ async function handleRequest(request: Request, session: D1DatabaseSession) {
 
 		return Response.json(buildResponse(session, resp, tsStart));
 
-	} else if (request.method === "DELETE" && pathname === '/api/orders') {
-		await session
-			.prepare('DROP TABLE IF EXISTS Orders;')
-			.run();
-		const resp = await initTables(session);
+	} else if (request.method === "POST" && pathname === '/api/reset') {
+		const resp = await resetTables(session);
 		
 		return Response.json(buildResponse(session, resp, tsStart));
 	}
@@ -99,6 +96,17 @@ function buildResponse(session: D1DatabaseSession, res: D1Result, tsStart: numbe
 async function initTables(session: D1DatabaseSession) {
 	return await session
 		.prepare(`CREATE TABLE IF NOT EXISTS Orders(
+			customerId TEXT NOT NULL,
+			orderId TEXT NOT NULL,
+			quantity INTEGER NOT NULL,
+			PRIMARY KEY (customerId, orderId)
+		)`)
+		.all();
+}
+
+async function resetTables(session: D1DatabaseSession) {
+	return await session
+		.prepare(`DROP TABLE IF EXISTS Orders; CREATE TABLE IF NOT EXISTS Orders(
 			customerId TEXT NOT NULL,
 			orderId TEXT NOT NULL,
 			quantity INTEGER NOT NULL,
