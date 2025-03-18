@@ -108,6 +108,8 @@
           fetchWorker("DELETE", "/api/orders", null, bookmark).then(listOrders);
         };
 
+        console.log(result);
+
         return html`
           <section ref=${containerRef}>
             <fieldset>
@@ -172,7 +174,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  ${Array.isArray(result?.results) ? result.results.reverse().map((row, idx) => {
+                  ${Array.isArray(result?.results) && result.results.length > 0 ? result.results.reverse().map((row, idx) => {
                     return html`<tr
                       key=${`${row.now}`}
                     >

@@ -59,7 +59,7 @@ async function handleRequest(request: Request, session: D1DatabaseSession) {
 		// Since this is a write query, D1 will transparently forward the query.
 		await session
 			.prepare('INSERT INTO Orders VALUES (?, ?, ?)')
-			.bind(order.orderId, order.customerId, order.quantity)
+			.bind(order.customerId, order.orderId, order.quantity)
 			.run();
 
 		// E. Session read-after-write query.
@@ -72,9 +72,11 @@ async function handleRequest(request: Request, session: D1DatabaseSession) {
 		return Response.json(buildResponse(session, resp, tsStart));
 
 	} else if (request.method === "DELETE" && pathname === '/api/orders') {
-		const resp = await session
-			.prepare('DELETE FROM Orders;')
+		await session
+			.prepare('DROP TABLE IF EXISTS Orders;')
 			.run();
+		const resp = await initTables(session);
+		
 		return Response.json(buildResponse(session, resp, tsStart));
 	}
 
@@ -95,11 +97,12 @@ function buildResponse(session: D1DatabaseSession, res: D1Result, tsStart: numbe
 }
 
 async function initTables(session: D1DatabaseSession) {
-	await session
+	return await session
 		.prepare(`CREATE TABLE IF NOT EXISTS Orders(
-			customerId TEXT UNIQUE NOT NULL PRIMARY KEY,
+			customerId TEXT NOT NULL,
 			orderId TEXT NOT NULL,
-			quantity INTEGER NOT NULL
+			quantity INTEGER NOT NULL,
+			PRIMARY KEY (customerId, orderId)
 		)`)
 		.all();
 }
