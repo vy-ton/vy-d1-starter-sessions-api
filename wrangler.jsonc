@@ -4,9 +4,11 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "d1-tutorial",
+	"name": "d1-starter-sessions-api",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-03-17",
+	// Remove once workerd is fully rolled out that this is default for all.
+	"compatibility_flags": ["enable_d1_with_sessions_api"],
 	"observability": {
 		"enabled": true,
 		"logs": {
@@ -26,7 +28,7 @@
 		{
 			"binding": "DB01",
 			"database_name": "d1-starter-sessions-api",
-			"database_id": "TODO"
+			"database_id": "9f805607-c2a8-4f5b-b4a7-90c024fc57cb"
 		}
 	]
 }

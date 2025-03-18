@@ -66,7 +66,7 @@ async function handleRequest(request: Request, session: D1DatabaseSession) {
 		// In order for the application to be correct, this SELECT
 		// statement must see the results of the INSERT statement above.
 		const resp = await session
-			.prepare('SELECT COUNT(*) FROM Orders')
+			.prepare('SELECT * FROM Orders')
 			.all();
 
 		return Response.json(buildResponse(session, resp, tsStart));

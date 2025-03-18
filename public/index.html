@@ -87,11 +87,12 @@
         const listOrders = () => {
           const bookmark = result ? result.sessionBookmark : "first-unconstrained";
           fetchWorker("GET", "/api/orders", null, bookmark).then(json => {
-            // Only update the bookmark if it's newer. Avoid issues with concurrent racy requests.
-            if ((mutRef.bookmark ?? "").localeCompare(json.sessionBookmark) < 0) {
-              setResult(json);
-              mutRef.bookmark = json.sessionBookmark;
+            if ((mutRef.bookmark ?? "").localeCompare(json.sessionBookmark) > 0) {
+              // Skip any update since it's an older bookmark than the current one.
+              return;
             }
+            mutRef.bookmark = json.sessionBookmark;
+            setResult(json);
           });
         };
 
@@ -101,7 +102,14 @@
             customerId: containerRef.current.querySelector("input[name='customerId']").value,
             orderId: containerRef.current.querySelector("input[name='orderId']").value,
             quantity: Number(containerRef.current.querySelector("input[name='quantity']").value),
-          }, bookmark).then(listOrders);
+          }, bookmark).then(json => {
+            if ((mutRef.bookmark ?? "").localeCompare(json.sessionBookmark) > 0) {
+              // Skip any update since it's an older bookmark than the current one.
+              return;
+            }
+            mutRef.bookmark = json.sessionBookmark;
+            setResult(json);
+          });
         };
 
         const resetTables = () => {
