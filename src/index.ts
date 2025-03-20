@@ -18,10 +18,9 @@ export default {
 			// Use this Session for all our Workers' routes.
 			const response = await handleRequest(request, session);
 
-			if (response.status === 200) {
-				// B. Return the bookmark so we can continue the Session in another request.
-				response.headers.set('x-d1-bookmark', session.getBookmark() ?? "");
-			}
+			// B. Return the bookmark so we can continue the Session in another request.
+			response.headers.set('x-d1-bookmark', session.getBookmark() ?? "");
+
 			return response;
 
 		} catch (e) {
