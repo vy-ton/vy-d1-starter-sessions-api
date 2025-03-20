@@ -100,8 +100,8 @@
           const bookmark = mutRef.bookmark ?? "first-unconstrained";
           fetchWorker("POST", "/api/orders", {
             customerId: containerRef.current.querySelector("input[name='customerId']").value,
-            orderId: containerRef.current.querySelector("input[name='orderId']").value,
-            quantity: Number(containerRef.current.querySelector("input[name='quantity']").value),
+            orderId: crypto.randomUUID(),
+            quantity: Math.ceil(Math.random() * 100),
           }, bookmark).then(json => {
             if ((mutRef.bookmark ?? "").localeCompare(json.sessionBookmark) > 0) {
               // Skip any update since it's an older bookmark than the current one.
@@ -122,35 +122,17 @@
         return html`
           <div ref=${containerRef}>
             <section>
-                <h4>Create new order</h4>
+                <h4>Actions</h4>
                 <div class="grid">
-                  <label>CustomerID
                   <input
                     name="customerId"
-                    value="customer-1"
+                    value="customer-id-1"
                     type="text"
                   />
-                  </label>
-                  <label>OrderID
-                  <input
-                    name="orderId"
-                    value=${crypto.randomUUID()}
-                    type="text"
-                  />
-                  </label>
-                  <label>Quantity
-                  <input
-                    name="quantity"
-                    value=${Math.ceil(Math.random()*100)}
-                    type="number"
-                  />
-                  </label>
-                </div>
-                <div class="grid">
                   <input
                     type="button"
                     onClick=${(e) => createOrder()}
-                    value="Create order"
+                    value="Create random order"
                   />
                   <input
                     type="button"
