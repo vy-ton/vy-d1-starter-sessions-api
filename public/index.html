@@ -114,7 +114,9 @@
 
         const resetTables = () => {
           const bookmark = mutRef.bookmark ?? "first-unconstrained";
-          fetchWorker("POST", "/api/reset", null, bookmark).then(listOrders);
+          fetchWorker("POST", "/api/reset", null, bookmark).then(json => {
+            setResult(json);
+          });
         };
 
         console.log(result);
@@ -132,7 +134,7 @@
                   <input
                     type="button"
                     onClick=${(e) => createOrder()}
-                    value="Create random order"
+                    value="Create order & List"
                   />
                   <input
                     type="button"
