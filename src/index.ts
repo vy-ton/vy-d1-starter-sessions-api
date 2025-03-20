@@ -16,7 +16,7 @@ export default {
 
 		try {
 			// Use this Session for all our Workers' routes.
-			const response = await handleRequest(request, session);
+			const response = await withTablesInitialized(session, async () => await handleRequest(request, session));
 
 			// B. Return the bookmark so we can continue the Session in another request.
 			response.headers.set('x-d1-bookmark', session.getBookmark() ?? "");
@@ -41,10 +41,8 @@ type Order = {
 
 async function handleRequest(request: Request, session: D1DatabaseSession) {
 	const { pathname } = new URL(request.url);
-	const tsStart = Date.now();
 
-	// Move to migrations for efficiency.
-	await initTables(session);
+	const tsStart = Date.now();
 
 	if (request.method === "GET" && pathname === '/api/orders') {
 		// C. Session read query.
@@ -90,6 +88,23 @@ function buildResponse(session: D1DatabaseSession, res: D1Result, tsStart: numbe
 		// Add the session bookmark inside the response body too.
 		sessionBookmark: session.getBookmark(),
 	};
+}
+
+/**
+ * This is mostly for DEMO purposes to avoid having to do separate schema migrations step.
+ * This will check if the error is because our main table is missing, and if it is create the table
+ * and rerun the handler.
+ */
+async function withTablesInitialized(session: D1DatabaseSession, handler: () => Promise<Response>) {
+	try {
+		return await handler();
+	} catch (e) {
+		if (String(e).includes("no such table: Orders: SQLITE_ERROR")) {
+			await initTables(session);
+			return await handler();
+		}
+		throw e;
+	}
 }
 
 async function initTables(session: D1DatabaseSession) {
