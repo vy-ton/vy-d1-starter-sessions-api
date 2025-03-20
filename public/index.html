@@ -60,12 +60,12 @@
             <dl class="grid">
               <div>
                 <dt>D1 Latency (Worker ➜ D1 Database)</dt>
-                <dd>${Number(d1Latency).toFixed(4)}ms</dd>
+                <dd>${Number(d1Latency).toFixed(0)}ms</dd>
               </div>
 
               <div>
                 <dt>E2E Latency (Browser ➜ Worker ➜ D1 Database)</dt>
-                <dd>${Number(browserLatency).toFixed(4)}ms</dd>
+                <dd>${Number(browserLatency).toFixed(0)}ms</dd>
               </div>
 
               ${servedByRegion ? html`
