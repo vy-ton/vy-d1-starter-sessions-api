@@ -82,6 +82,7 @@
       const Demo1 = () => {
         const containerRef = useRef(null);
         const mutRef = useRef({});
+        const [primaryRegion, setPrimaryRegion] = useState(null);
         const [result, setResult] = useState(null);
 
         const listOrders = () => {
@@ -119,6 +120,17 @@
           });
         };
 
+        useEffect(async () => {
+          const json = await fetchWorker("GET", "/api/orders", null, "first-primary");
+          setPrimaryRegion(json.servedByRegion);
+          if ((mutRef.bookmark ?? "").localeCompare(json.sessionBookmark) > 0) {
+            // Skip any update since it's an older bookmark than the current one.
+            return;
+          }
+          mutRef.bookmark = json.sessionBookmark;
+          setResult(json);
+        }, []);
+
         console.log(result);
 
         return html`
@@ -147,6 +159,12 @@
                     value="Reset"
                   />
                 </div>
+                <ul style="font-size: 0.8em">
+                  <li><strong>Create order & List:</strong> 1 write query to the primary followed by 1 read query to a replica.</li>
+                  <li><strong>List orders:</strong> 1 read query to a replica.</li>
+                  <li><strong>Reset:</strong> 1 write query to the primary.</li>
+                  ${primaryRegion ? html`<li><strong>Primary database region:</strong> ${primaryRegion}</li>` : null}
+                </ul>
             </section>
 
             <${Latencies} ...${result} />
