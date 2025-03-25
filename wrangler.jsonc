@@ -4,7 +4,7 @@
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "d1-starter-sessions-api",
+	"name": "vy-d1-starter-sessions-api",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-03-17",
 	"observability": {
