@@ -7,8 +7,6 @@
 	"name": "d1-starter-sessions-api",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-03-17",
-	// Remove once workerd is fully rolled out that this is default for all.
-	"compatibility_flags": ["enable_d1_with_sessions_api"],
 	"observability": {
 		"enabled": true,
 		"logs": {
