@@ -25,8 +25,7 @@
 	"d1_databases": [
 		{
 			"binding": "DB01",
-			"database_name": "d1-starter-sessions-api",
-			"database_id": "9f805607-c2a8-4f5b-b4a7-90c024fc57cb"
+			"database_name": "vy-d1-starter-sessions-api"
 		}
 	]
 }
